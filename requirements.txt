@@ -1,2 +1,5 @@
 Django==4.1.7
 python-decouple==3.8
+flake8==6.0.0
+autopep8==2.0.2
+tox==4.4.7
