@@ -4,3 +4,5 @@ flake8==6.0.0
 autopep8==2.0.2
 tox==4.4.7
 django-split-settings==1.2.0
+boto3==1.26.102
+django-storages==1.13.2
