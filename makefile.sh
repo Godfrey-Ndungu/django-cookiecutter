@@ -27,3 +27,7 @@ pip3 install -r requirements.txt
 
 # Migrate using cookie-cutter development settings
 python3 manage.py migrate --settings=cookiecutter.development
+#install redis
+sudo apt update
+sudo apt install redis
+sudo redis-server
