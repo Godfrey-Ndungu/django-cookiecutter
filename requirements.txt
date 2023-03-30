@@ -10,3 +10,4 @@ djangorestframework==3.14.0
 django-filter==22.1
 Markdown==3.4.3
 djangorestframework-simplejwt==5.2.2
+requests==2.20.1
