@@ -14,6 +14,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "storages",
+    "db_logging",
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
@@ -110,3 +111,25 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERYD_MAX_TASKS_PER_CHILD = 1000
 CELERY_TASK_RESULT_EXPIRES = 60 * 60 * 24
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'DEBUG',
+        },
+        'database': {
+            'class': 'db_logging.handlers.DatabaseHandler',
+            'model': 'db_logging.LogEntry',
+            'level': 'DEBUG',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'database'],
+            'level': 'DEBUG',
+        },
+    },
+}
