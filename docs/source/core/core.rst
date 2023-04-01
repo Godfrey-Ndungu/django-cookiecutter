@@ -1,5 +1,8 @@
 .. django-minimal-cookiecutter documentation master file, created by
-   sphinx-quickstart on Wed Mar 31 2023.
+   sphiCore Models
+  
+Core
+======================
 
 .. toctree::
    :maxdepth: 2
