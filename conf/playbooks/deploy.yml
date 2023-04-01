@@ -1,0 +1,190 @@
+- name: Setup Ubuntu Server
+  hosts: all
+  become: true
+  
+  vars_files:
+    - .deploy-env
+  
+  tasks:
+    - name: Install Python and Setup Tools
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - python3
+        - python3-pip
+        - python3-venv
+        - python3-dev
+        - build-essential
+  
+    - name: Install Git
+      apt:
+        name: git
+        state: present
+        
+    - name: Install Postgres
+      apt:
+        name: postgresql
+        state: present
+      become: true
+      
+    - name: Setup Postgres User and Database
+      postgresql_user:
+        db: "{{ postgres_database }}"
+        user: "{{ postgres_user }}"
+        password: "{{ postgres_password | quote }}"
+        encrypted: yes
+        login_host: localhost
+        login_user: postgres
+      vars:
+        postgres_database: "{{ lookup('env', 'POSTGRES_DB') }}"
+        postgres_user: "{{ lookup('env', 'POSTGRES_USER') }}"
+        postgres_password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+  
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+      
+    - name: Add Connection Timeout to Nginx Conf
+      lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: 'keepalive_timeout\s+.*;'
+        line: '    keepalive_timeout 96000;'
+      
+    - name: Create Nginx Conf File for Project
+      template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/sites-available/{{ project_name }}
+      become: true
+      
+    - name: Create Simlink in Enabled Site
+      file:
+        src: /etc/nginx/sites-available/{{ project_name }}
+        dest: /etc/nginx/sites-enabled/{{ project_name }}
+        state: link
+      
+    - name: Check Nginx Config
+      command: sudo nginx -t
+      become: true
+      
+    - name: Reload Nginx
+      service:
+        name: nginx
+        state: reloaded
+      
+    - name: Install Redis
+      apt:
+        name: redis-server
+        state: present
+      
+    - name: Install Docker and Docker Compose
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg
+        - lsb-release
+      become: true
+      
+    - name: Add Docker GPG Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable
+        state: present
+      
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: present
+      become: true
+      
+    - name: Add Docker Compose Binary
+      get_url:
+        url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}"
+        dest: /usr/local/bin/docker-compose
+        mode
+    owner: root
+    group: root
+    validate_certs: no
+  vars:
+    docker_compose_version: "1.29.1"
+  
+- name: Set Docker Compose Permissions
+  file:
+    path: /usr/local/bin/docker-compose
+    mode: 0755
+  
+- name: Install Certbot and Systemd
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - certbot
+    - python3-certbot-nginx
+    - systemd
+  become: true
+  
+- name: Request SSL Certificate from Let's Encrypt
+  certbot:
+    domains:
+      - "{{ domain_name }}"
+    email: "{{ email }}"
+    rsa_key_size: 4096
+    nginx: true
+    redirect: true
+    agree_tos: true
+    force_renewal: true
+  
+- name: Allow Nginx Full Access
+  ufw:
+    rule: allow
+    name: "Nginx Full"
+  
+- name: Git Clone Project and Checkout to Main
+  git:
+    repo: "{{ git_repo_url }}"
+    dest: "{{ project_path }}"
+    version: main
+  
+- name: Build Docker Images
+  command: docker-compose build
+  args:
+    chdir: "{{ project_path }}"
+    
+- name: Start Docker Containers
+  command: docker-compose up -d
+  args:
+    chdir: "{{ project_path }}"
+    
+- name: Restart Nginx
+  service:
+    name: nginx
+    state: restarted
+  
+- name: Restart Redis
+  service:
+    name: redis-server
+    state: restarted
+  
+- name: Restart Postgres
+  service:
+    name: postgresql
+    state: restarted
+  
+- name: Restart Docker
+  service:
+    name: docker
+    state: restarted
+  
+- name: Restart Systemd
+  service:
+    name: systemd-resolved
+    state: restarted
