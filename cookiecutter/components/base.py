@@ -14,7 +14,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "storages",
-    "db_logging",
+    "django_db_logger",
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
@@ -115,21 +115,29 @@ CELERY_TASK_RESULT_EXPIRES = 60 * 60 * 24
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'level': 'DEBUG',
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
-        'database': {
-            'class': 'db_logging.handlers.DatabaseHandler',
-            'model': 'db_logging.LogEntry',
+        'simple': {
+            'format': '%(levelname)s %(asctime)s %(message)s'
+        },
+    },
+    'handlers': {
+        'db_log': {
             'level': 'DEBUG',
+            'class': 'django_db_logger.db_log_handler.DatabaseLogHandler'
         },
     },
     'loggers': {
-        'django': {
-            'handlers': ['console', 'database'],
-            'level': 'DEBUG',
+        'db': {
+            'handlers': ['db_log'],
+            'level': 'DEBUG'
         },
-    },
+        'django.request': { # logging 500 errors to database
+            'handlers': ['db_log'],
+            'level': 'ERROR',
+            'propagate': False,
+        }
+    }
 }
