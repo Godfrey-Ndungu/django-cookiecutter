@@ -8,6 +8,7 @@ from rest_framework_simplejwt.views import (
 )
 from rest_framework_simplejwt.views import TokenVerifyView
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView
+from core.signals_loader import load_signals
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -29,3 +30,6 @@ if settings.DEBUG:
         re_path("media/(?P<path>.*)",
                 serve, {"document_root": settings.MEDIA_ROOT})
     ]
+
+
+load_signals()
