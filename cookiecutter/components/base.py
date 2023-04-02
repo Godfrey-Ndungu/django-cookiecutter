@@ -117,7 +117,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s' # noqa
         },
         'simple': {
             'format': '%(levelname)s %(asctime)s %(message)s'
@@ -134,7 +134,7 @@ LOGGING = {
             'handlers': ['db_log'],
             'level': 'DEBUG'
         },
-        'django.request': { # logging 500 errors to database
+        'django.request': {
             'handlers': ['db_log'],
             'level': 'ERROR',
             'propagate': False,
