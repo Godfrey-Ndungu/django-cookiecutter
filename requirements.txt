@@ -1,6 +1,6 @@
 Django==3.2.18
 python-decouple==3.8
-flake8==6.0.0
+flake8==5.0.4
 autopep8==2.0.2
 tox==4.4.7
 django-split-settings==1.2.0
