@@ -19,8 +19,8 @@ sudo systemctl start docker.service
 sudo -H pip3 install docker-compose
 
 # Create a virtual environment and activate it
-python3 -m venv env
-source env/bin/activate
+python3 -m venv venv
+source venv/bin/activate
 
 # Install the required packages from requirements.txt file
 pip3 install -r requirements.txt
