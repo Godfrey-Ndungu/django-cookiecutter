@@ -2,6 +2,17 @@ import os
 import sys
 import django
 
+
+requirements_path = os.path.join(os.path.dirname(__file__), 'requirements.txt')
+
+# Install the requirements
+try:
+    with open(requirements_path) as f:
+        install_reqs = f.read()
+    os.system(f"pip install {install_reqs}")
+except FileNotFoundError:
+    print("Requirements file not found. Skipping install.")
+
 sys.path.insert(0, os.path.abspath("../../"))
 os.environ["DJANGO_SETTINGS_MODULE"] = "cookiecutter.development"
 django.setup()
