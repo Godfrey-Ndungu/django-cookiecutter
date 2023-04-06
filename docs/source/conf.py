@@ -3,7 +3,8 @@ import sys
 import django
 
 
-requirements_path = os.path.join(os.path.dirname(__file__), 'requirements.txt')
+requirements_path = os.path.join(
+    os.path.dirname(__file__), '../docs-requirements.txt')
 
 # Install the requirements
 try:
