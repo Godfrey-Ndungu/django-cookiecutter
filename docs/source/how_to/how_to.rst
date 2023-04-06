@@ -1,5 +1,3 @@
-.. django-minimal-cookiecutter documentation master file, created by
-   sphinx-quickstart on Wed Mar 31 2023.
 How to
 =======================================================
 
