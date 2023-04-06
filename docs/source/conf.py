@@ -4,7 +4,7 @@ import django
 
 
 sys.path.insert(0, os.path.abspath("../../"))
-os.environ["DJANGO_SETTINGS_MODULE"] = "cookiecutter.development"
+os.environ["DJANGO_SETTINGS_MODULE"] = "cookiecutter.sphinx_build"
 django.setup()
 
 project = "django-minimal-cookiecutter"
