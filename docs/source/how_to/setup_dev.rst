@@ -4,7 +4,6 @@ Set Up Development with django-minimal-cookiecutter
 This guide will walk you through the steps to set up a development environment for the `django-minimal-cookiecutter` project.
 
 Prerequisites
--------------
 
 Before you begin, make sure you have the following software installed on your system:
 
@@ -48,8 +47,3 @@ This will install the following software on your system:
 - Setuptools
 
 It will also create a virtual environment and install the project requirements.
-
-Conclusion
-----------
-
-You now have a fully functional development environment for the `django-minimal-cookiecutter` project. Happy coding!

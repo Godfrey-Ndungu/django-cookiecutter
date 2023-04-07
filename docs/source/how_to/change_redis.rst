@@ -90,7 +90,3 @@ Finally, restart the Docker Compose services to apply the changes:
     docker-compose down
     docker-compose up --build
 
-Conclusion
-----------
-
-You have now successfully replaced Redis with RabbitMQ as the message broker in your Django project.

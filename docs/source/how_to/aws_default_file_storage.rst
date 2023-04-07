@@ -58,8 +58,3 @@ Finally, test the custom storage backend by uploading a file to S3 using Django'
 
     file = open('/path/to/file.jpg', 'rb')
     default_storage.save('file.jpg', file)
-
-Conclusion
-----------
-
-You have now successfully customized AWS file storage in `cookiecutter.storagebackend` using `boto3`.
