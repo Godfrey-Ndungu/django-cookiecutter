@@ -14,10 +14,3 @@ How to
    add_logs
    change_db
    customize_ansible
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

@@ -74,8 +74,3 @@ Finally, restart the Docker Compose services to apply the changes:
 
     docker-compose down
     docker-compose up --build
-
-Conclusion
-----------
-
-You have now successfully changed the Celery task name in `cookiecutter.celery` and updated Docker Compose `celery_worker` command.

@@ -47,8 +47,3 @@ Add the `custom_exception_handler` to the `EXCEPTION_HANDLER` setting in your Dj
 Step 3: Test the Custom Exception Handler
 
 Test the custom exception handler by triggering an exception in your Django Rest API. For example, if you try to access a non-existent object, you should see the custom error message "The requested resource does not exist."
-
-Conclusion
-----------
-
-You have now successfully customized the error handling in Django Rest using a custom exception handler. You can extend this handler to handle other types of exceptions as needed.

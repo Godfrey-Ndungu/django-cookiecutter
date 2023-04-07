@@ -48,7 +48,3 @@ For example, if you've created a custom Nginx configuration file called `myproje
         src: "path/to/myproject.conf.j2"
         dest: "/etc/nginx/sites-available/{{ project_name }}"
 
-Conclusion
-----------
-
-In this guide, you learned how to customize the Ansible variables in the `django-minimal-cookiecutter` project to suit your needs. By modifying these variables, you can set up your development environment with your own PostgreSQL database and user, project name, Docker Compose version, and Nginx configuration file.
