@@ -44,7 +44,7 @@ services:
 
   celery_worker:
     build: .
-    command: celery -A Main worker -l info --without-gossip --without-mingle --without-heartbeat -Ofair --pool=solo
+    command: celery -A cookiecutter worker -l info --without-gossip --without-mingle --without-heartbeat -Ofair --pool=solo
     depends_on:
       - redis
     env_file: .env-docker

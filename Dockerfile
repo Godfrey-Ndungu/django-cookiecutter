@@ -17,7 +17,7 @@ COPY . .
 EXPOSE 8000
 
 # Define environment variables for Django settings
-ENV DJANGO_SETTINGS_MODULE=fileUpload.development
+ENV DJANGO_SETTINGS_MODULE=cookiecutter.development
 ENV PYTHONUNBUFFERED=1
 
 # Start the Django web server with auto-reloading
