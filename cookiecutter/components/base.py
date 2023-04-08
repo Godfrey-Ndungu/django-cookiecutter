@@ -2,7 +2,7 @@ from pathlib import Path
 from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = SECRET_KEY = config("SECRET_KEY",default='hdiohiodoidhioddontuseproductiondnhjodjiojdiod90')
+SECRET_KEY = SECRET_KEY = config("SECRET_KEY", default='hdiohiodoidhioddontuseproductiondnhjodjiojdiod90') # noqa
 DEBUG = config("DEBUG", default=False, cast=bool)
 ALLOWED_HOSTS = []
 
@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "drf_spectacular",
     "drf_spectacular_sidecar",
+    "django_fsm",
     "core",
 ]
 

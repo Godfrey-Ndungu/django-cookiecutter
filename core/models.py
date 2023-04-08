@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.contrib.auth import get_user_model
+from django_fsm import FSMField, transition
 
 User = get_user_model()
 
@@ -115,3 +116,63 @@ class SingletonModel(models.Model):
         """
         obj, created = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class Task(models.Model):
+    """
+    A model for tracking tasks.
+
+    Attributes:
+        name (str): The name of the task.
+        task_ingestor (str): The ingestor responsible for the task.
+        datetime (datetime): The date and time the task was created.
+        status (str): The current status of the task.
+            Allowed values are
+            'pending', 'processing', 'processed', and 'failed'.
+    """
+
+    TASK_STATUS_PENDING = "pending"
+    TASK_STATUS_PROCESSING = "processing"
+    TASK_STATUS_PROCESSED = "processed"
+    TASK_STATUS_FAILED = "failed"
+    TASK_STATUS_CHOICES = (
+        (TASK_STATUS_PENDING, "Pending"),
+        (TASK_STATUS_PROCESSING, "Processing"),
+        (TASK_STATUS_PROCESSED, "Processed"),
+        (TASK_STATUS_FAILED, "Failed"),
+    )
+
+    name = models.CharField(max_length=255)
+    task_ingestor = models.CharField(max_length=255, blank=True)
+    datetime = models.DateTimeField(auto_now_add=True)
+    status = FSMField(default=TASK_STATUS_PENDING, choices=TASK_STATUS_CHOICES)
+
+    @transition(field=status,
+                source=TASK_STATUS_PENDING, target=TASK_STATUS_PROCESSING)
+    def start_processing(self):
+        """Transition the task from 'pending' to 'processing'."""
+        pass
+
+    @transition(
+        field=status,
+        source=TASK_STATUS_PROCESSING, target=TASK_STATUS_PROCESSED
+    )
+    def complete_processing(self):
+        """Transition the task from 'processing' to 'processed' and delete the record."""
+        self.delete()
+
+    @transition(field=status, source=TASK_STATUS_PROCESSING, target=TASK_STATUS_FAILED)
+    def fail_processing(self):
+        """Transition the task from 'processing' to 'failed'."""
+        pass
+
+    def save(self, *args, **kwargs):
+        """Save the task and delete it if its status is 'processed'."""
+        if self.status == self.TASK_STATUS_PROCESSED:
+            self.delete()
+        super(Task, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        """Delete the task only if its status is 'processed'."""
+        if self.status != self.TASK_STATUS_PROCESSED:
+            super(Task, self).delete(*args, **kwargs)
