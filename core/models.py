@@ -158,10 +158,12 @@ class Task(models.Model):
         source=TASK_STATUS_PROCESSING, target=TASK_STATUS_PROCESSED
     )
     def complete_processing(self):
-        """Transition the task from 'processing' to 'processed' and delete the record."""
+        """Transition the task from 'processing'
+        to 'processed' and delete the record."""
         self.delete()
 
-    @transition(field=status, source=TASK_STATUS_PROCESSING, target=TASK_STATUS_FAILED)
+    @transition(field=status,
+                source=TASK_STATUS_PROCESSING, target=TASK_STATUS_FAILED)
     def fail_processing(self):
         """Transition the task from 'processing' to 'failed'."""
         pass
@@ -174,5 +176,5 @@ class Task(models.Model):
 
     def delete(self, *args, **kwargs):
         """Delete the task only if its status is 'processed'."""
-        if self.status != self.TASK_STATUS_PROCESSED:
+        if self.status == self.TASK_STATUS_PROCESSED:
             super(Task, self).delete(*args, **kwargs)
