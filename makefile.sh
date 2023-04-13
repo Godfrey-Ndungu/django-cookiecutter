@@ -38,3 +38,10 @@ sudo apt-get install -y software-properties-common
 sudo apt-add-repository -y ppa:ansible/ansible
 sudo apt-get update
 sudo apt-get install -y ansible
+
+.PHONY: clean
+
+clean:
+    find docs/source -type f ! -name 'conf.py' -delete
+    touch docs/source/index.rst
+    touch docs/source/introduction.rst
