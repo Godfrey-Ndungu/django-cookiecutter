@@ -1,40 +1,49 @@
-#!/bin/bash
+# Define variables
+PYTHON = python3
+PIP = pip3
+VENV = venv
+SETTINGS = cookiecutter.development
 
-# Update the package index and install essential dependencies
-sudo apt update
-sudo apt install -y curl wget build-essential libssl-dev libffi-dev python3-dev
+# Check if Docker is installed
+HAS_DOCKER := $(shell command -v docker 2> /dev/null)
 
-# Install the latest version of Python and pip
-sudo apt install -y python3 python3-pip
-sudo -H pip3 install --upgrade pip
+# Check if Redis is installed
+HAS_REDIS := $(shell command -v redis-server 2> /dev/null)
 
-# Install Python development tools and virtual environment
-sudo apt install -y python3-venv python3-wheel
+# Check if Ansible is installed
+HAS_ANSIBLE := $(shell command -v ansible 2> /dev/null)
 
-# Install Docker and docker-compose
-sudo apt install -y docker.io
-sudo usermod -aG docker $USER
-sudo systemctl enable docker.service
-sudo systemctl start docker.service
-sudo -H pip3 install docker-compose
+# Install dependencies
+deps:
+ifeq ($(HAS_DOCKER),)
+    sudo apt update && sudo apt install -y curl wget build-essential libssl-dev libffi-dev python3-dev python3 python3-pip python3-venv python3-wheel docker.io
+    sudo usermod -aG docker $USER
+    sudo systemctl enable docker.service
+    sudo systemctl start docker.service
+    sudo -H pip3 install --upgrade pip docker-compose
+else
+    sudo apt update && sudo apt install -y curl wget build-essential libssl-dev libffi-dev python3-dev python3 python3-pip python3-venv python3-wheel
+    sudo -H pip3 install --upgrade pip
+    sudo -H pip3 install docker-compose
+endif
+ifeq ($(HAS_ANSIBLE),)
+    sudo apt-get update && sudo apt-get install -y software-properties-common
+    sudo apt-add-repository -y ppa:ansible/ansible
+    sudo apt-get update && sudo apt-get install -y ansible
+endif
+ifeq ($(HAS_REDIS),)
+    sudo apt update && sudo apt install -y redis
+    sudo redis-server
+endif
 
-# Create a virtual environment and activate it
-python3 -m venv venv
-source venv/bin/activate
+# Create virtual environment and install required packages
+install:
+    $(PYTHON) -m venv $(VENV)
+    source $(VENV)/bin/activate && $(PIP) install -r requirements.txt
+    $(PYTHON) manage.py migrate --settings=$(SETTINGS)
 
-# Install the required packages from requirements.txt file
-pip3 install -r requirements.txt
-
-# Migrate using cookie-cutter development settings
-python3 manage.py migrate --settings=cookiecutter.development
-#install redis
-sudo apt update
-sudo apt install redis
-sudo redis-server
-
-#install ansible
-sudo apt-get update
-sudo apt-get install -y software-properties-common
-sudo apt-add-repository -y ppa:ansible/ansible
-sudo apt-get update
-sudo apt-get install -y ansible
+# Clean docs/source directory
+clean:
+    find docs/source -type f ! -name 'conf.py' -delete
+    touch docs/source/index.rst
+    touch docs/source/introduction.rst
