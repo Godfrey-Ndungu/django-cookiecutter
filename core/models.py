@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.contrib.auth import get_user_model
-from django_fsm import FSMField, transition
 
 User = get_user_model()
 
@@ -145,28 +144,28 @@ class Task(models.Model):
     name = models.CharField(max_length=255)
     task_ingestor = models.CharField(max_length=255, blank=True)
     datetime = models.DateTimeField(auto_now_add=True)
-    status = FSMField(default=TASK_STATUS_PENDING, choices=TASK_STATUS_CHOICES)
+    status = models.CharField(
+        max_length=20, choices=TASK_STATUS_CHOICES, default=TASK_STATUS_PENDING
+    )
 
-    @transition(field=status,
-                source=TASK_STATUS_PENDING, target=TASK_STATUS_PROCESSING)
     def start_processing(self):
         """Transition the task from 'pending' to 'processing'."""
-        pass
+        if self.status == self.TASK_STATUS_PENDING:
+            self.status = self.TASK_STATUS_PROCESSING
+            self.save()
 
-    @transition(
-        field=status,
-        source=TASK_STATUS_PROCESSING, target=TASK_STATUS_PROCESSED
-    )
     def complete_processing(self):
         """Transition the task from 'processing'
         to 'processed' and delete the record."""
-        self.delete()
+        if self.status == self.TASK_STATUS_PROCESSING:
+            self.status = self.TASK_STATUS_PROCESSED
+            self.save()
 
-    @transition(field=status,
-                source=TASK_STATUS_PROCESSING, target=TASK_STATUS_FAILED)
     def fail_processing(self):
         """Transition the task from 'processing' to 'failed'."""
-        pass
+        if self.status == self.TASK_STATUS_PROCESSING:
+            self.status = self.TASK_STATUS_FAILED
+            self.save()
 
     def save(self, *args, **kwargs):
         """Save the task and delete it if its status is 'processed'."""

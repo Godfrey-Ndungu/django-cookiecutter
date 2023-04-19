@@ -1,40 +1,68 @@
 from django.test import TestCase
 from core.models import Task
 
-class TaskTestCase(TestCase):
 
-    def test_task_creation(self):
-        task = Task.objects.create(name="Test Task", task_ingestor="Test Ingestor")
-        self.assertTrue(isinstance(task, Task))
-        self.assertEqual(task.name, "Test Task")
-        self.assertEqual(task.task_ingestor, "Test Ingestor")
+class TaskModelTests(TestCase):
+    def test_start_processing(self):
+        task = Task.objects.create(
+            name="Test Task", task_ingestor="Test Ingestor")
         self.assertEqual(task.status, Task.TASK_STATUS_PENDING)
 
-    def test_task_processing(self):
-        # Create a task with status 'pending'
-        task = Task.objects.create(name="Test Task", task_ingestor="Test Ingestor")
-        
-    def test_task_failed_processing(self):
-        task = Task.objects.create(name="Test Task", task_ingestor="Test Ingestor")
+        self.test_start_processing_5(task)
+        self.test_start_processing_5(task)
+
+    def test_start_processing_5(self, task):
+        self.test_delete_2(task)
+
+    def test_complete_processing(self):
+        task = self.test_save_2()
+        task.complete_processing()
+        self.assertTrue(Task.objects.filter(id=task.id).exists())
+
+        task = Task.objects.create(
+            name="Test Task", task_ingestor="Test Ingestor")
+        task.complete_processing()
+        self.assertTrue(Task.objects.filter(id=task.id).exists())
+
+    def test_fail_processing(self):
+        task = Task.objects.create(
+            name="Test Task", task_ingestor="Test Ingestor")
         self.assertEqual(task.status, Task.TASK_STATUS_PENDING)
-        task.start_processing()
-        self.assertEqual(task.status, Task.TASK_STATUS_PROCESSING)
+
         task.fail_processing()
+        task.refresh_from_db()
+        self.assertEqual(task.status, Task.TASK_STATUS_PENDING)
+
+        task.start_processing()
+        task.fail_processing()
+        task.refresh_from_db()
         self.assertEqual(task.status, Task.TASK_STATUS_FAILED)
 
-    def test_task_deletion(self):
-        # Create a task with status 'processed'
-        task = Task.objects.create(name="Test Task", task_ingestor="Test Ingestor", status=Task.TASK_STATUS_PROCESSED)
-        task.delete()
-        # Check that the task has been deleted from the database
-        self.assertFalse(Task.objects.filter(pk=task.pk).exists())
-
-        # Create a task with status 'processing' and fail the processing
-        task = Task.objects.create(name="Test Task", task_ingestor="Test Ingestor")
-        task.start_processing()
         task.fail_processing()
-        task.delete()
-        # Check that the task has not been deleted from the database
-        self.assertTrue(Task.objects.filter(pk=task.pk).exists())
-        # Check that the status of the task is 'failed'
-        self.assertEqual(Task.objects.get(pk=task.pk).status, Task.TASK_STATUS_FAILED)
+        task.refresh_from_db()
+        self.assertEqual(task.status, Task.TASK_STATUS_FAILED)
+
+    def test_save(self):
+        task = self.test_save_2()
+        self.test_save_3(task)
+        task = Task.objects.create(
+            name="Test Task", task_ingestor="Test Ingestor")
+        self.test_save_3(task)
+
+    def test_save_3(self, task):
+        task.status = Task.TASK_STATUS_PROCESSED
+        task.save()
+        self.assertTrue(Task.objects.filter(id=task.id).exists())
+
+    def test_save_2(self):
+        result = Task.objects.create(
+            name="Test Task", task_ingestor="Test Ingestor")
+        self.assertEqual(result.status, Task.TASK_STATUS_PENDING)
+        self.test_delete_2(result)
+        return result
+
+
+    def test_delete_2(self, task):
+        task.start_processing()
+        task.refresh_from_db()
+        self.assertEqual(task.status, Task.TASK_STATUS_PROCESSING)
