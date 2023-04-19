@@ -6,5 +6,5 @@ class CoreConfig(AppConfig):
     name = "core"
 
     def ready(self):
-        from core.signals_loader import load_signals # noqa
+        from core.signals_loader import load_signals  # noqa
         load_signals()

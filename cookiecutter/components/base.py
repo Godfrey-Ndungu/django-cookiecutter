@@ -2,7 +2,7 @@ from pathlib import Path
 from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = SECRET_KEY = config("SECRET_KEY", default='hdiohiodoidhioddontuseproductiondnhjodjiojdiod90') # noqa
+SECRET_KEY = SECRET_KEY = config("SECRET_KEY", default='hdiohiodoidhioddontuseproductiondnhjodjiojdiod90')  # noqa
 DEBUG = config("DEBUG", default=False, cast=bool)
 ALLOWED_HOSTS = []
 
@@ -117,7 +117,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s' # noqa
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'  # noqa
         },
         'simple': {
             'format': '%(levelname)s %(asctime)s %(message)s'

@@ -13,6 +13,6 @@ def load_signals():
         signals_path = os.path.join(
             os.path.dirname(app_module.__file__),
             "signals.py"
-            )
+        )
         if os.path.exists(signals_path):
             importlib.import_module(f"{app_config.name}.signals")
