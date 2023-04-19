@@ -14,3 +14,4 @@ How to
    add_logs
    change_db
    customize_ansible
+   customize_docs

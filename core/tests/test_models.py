@@ -61,7 +61,6 @@ class TaskModelTests(TestCase):
         self.test_delete_2(result)
         return result
 
-
     def test_delete_2(self, task):
         task.start_processing()
         task.refresh_from_db()

@@ -13,10 +13,10 @@ author = "godfrey-ndungu"
 release = "1.0.0"
 
 extensions = ["sphinx.ext.autodoc",
-              "sphinx.ext.viewcode", 
-                "sphinx.ext.todo",
-                "sphinx.ext.coverage",
-                "sphinx.ext.viewcode",
+              "sphinx.ext.viewcode",
+              "sphinx.ext.todo",
+              "sphinx.ext.coverage",
+              "sphinx.ext.viewcode",
               "sphinx.ext.napoleon"]
 
 templates_path = ["_templates"]
@@ -25,4 +25,5 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 
-html_builder = ["sphinx","-b", "html", "-d", "docs/source", "-D", "language=en"]
+html_builder = ["sphinx", "-b", "html",
+                "-d", "docs/source", "-D", "language=en"]
