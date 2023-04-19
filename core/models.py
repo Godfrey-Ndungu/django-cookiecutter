@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.postgres.fields import JSONField
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
+from django.contrib.auth.models import User
 
 
 class TrackableModel(models.Model):
@@ -177,3 +175,55 @@ class Task(models.Model):
         """Delete the task only if its status is 'processed'."""
         if self.status == self.TASK_STATUS_PROCESSED:
             super(Task, self).delete(*args, **kwargs)
+
+
+class UserVisitHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    url = models.CharField(max_length=255)
+    referer = models.CharField(max_length=255, null=True, blank=True)
+    user_agent = models.TextField()
+
+    class Meta:
+        verbose_name_plural = "User visit history"
+        ordering = ['-timestamp']
+
+
+class LoginHistoryTrail(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    successful = models.BooleanField(default=False)
+    ip_address = models.GenericIPAddressField()
+    user_agent = models.TextField()
+    location = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = "Login history trail"
+        ordering = ['-timestamp']
+
+
+class LoginAttemptsHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    successful = models.BooleanField(default=False)
+    ip_address = models.GenericIPAddressField()
+    user_agent = models.TextField()
+    location = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = "Login attempts history"
+        ordering = ['-timestamp']
+
+
+class ExtraData(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    browser = models.CharField(max_length=255)
+    ip_address = models.GenericIPAddressField()
+    device = models.CharField(max_length=255, null=True, blank=True)
+    os = models.CharField(max_length=255, null=True, blank=True)
+    location = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = "Extra data"
+        ordering = ['-timestamp']
