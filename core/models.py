@@ -166,15 +166,8 @@ class Task(models.Model):
             self.save()
 
     def save(self, *args, **kwargs):
-        """Save the task and delete it if its status is 'processed'."""
-        if self.status == self.TASK_STATUS_PROCESSED:
-            self.delete()
+        """Save the task """
         super(Task, self).save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        """Delete the task only if its status is 'processed'."""
-        if self.status == self.TASK_STATUS_PROCESSED:
-            super(Task, self).delete(*args, **kwargs)
 
 
 class UserVisitHistory(models.Model):
