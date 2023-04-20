@@ -6,6 +6,23 @@ orbs:
   codecov: codecov/codecov@3.2.4
 
 jobs:
+  rebuild:
+    docker:
+      - image: circleci/python:3.9.7-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: ""
+      MY_ENV_VAR: "my-value"
+    steps:
+      - checkout
+      - run:
+          name: Clean build artifacts
+          command: rm -rf build/
+      - run:
+          name: Rebuild project
+          command: tox -r
+
   build:
     docker:
       - image: circleci/python:3.9.7-postgres
@@ -25,6 +42,7 @@ jobs:
       - codecov/upload:
           requires:
             - build
+
   deploy:
     docker:
       - image: circleci/python:3.9.7-postgres
@@ -50,17 +68,25 @@ workflows:
   version: 2
   build-and-deploy:
     jobs:
-      - python/build:
+      - python/rebuild:
           filters:
             branches:
               only: develop
-      - python/build:
+      - python/rebuild:
           filters:
             branches:
               only: release
-      # - deploy:
-      #     requires:
-      #       - python/build
-      #     filters:
-      #       branches:
-      #         only: main
+      - build:
+          filters:
+            branches:
+              only: develop
+      - build:
+          filters:
+            branches:
+              only: release
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: main
