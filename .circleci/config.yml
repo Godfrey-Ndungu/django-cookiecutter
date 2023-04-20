@@ -8,13 +8,13 @@ orbs:
 jobs:
   build:
     docker:
-      - image: circleci/python:3.9.7-postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_DB: postgres
-      POSTGRES_PASSWORD: ""
-      DJANGO_SETTINGS_MODULE: config.settings.development
-      MY_ENV_VAR: "my-value"
+      - image: circleci/python:3.7
+        environment:
+          DATABASE_URL: postgresql://root@localhost/circle_test?sslmode=disable
+      - image: circleci/postgres:9.6.2
+        environment:
+          POSTGRES_USER: root
+          POSTGRES_DB: circle_test
     steps:
       - checkout
       - restore_cache:
@@ -39,8 +39,9 @@ workflows:
       - build:
           filters:
             branches:
-              only: develop
+              only: only: /.*/
       - build:
           filters:
             branches:
               only: release
+        
