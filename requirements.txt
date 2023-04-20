@@ -1,4 +1,4 @@
-django==4.1.8 
+django==3.2.18
 python-decouple==3.8
 flake8==6.0.0
 autopep8==2.0.2
