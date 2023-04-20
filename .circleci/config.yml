@@ -1,8 +1,9 @@
 version: 2.1
 
 orbs:
-  python: circleci/python@1.2.2
-  ansible: circleci/ansible@1.1.6
+  python: circleci/python@2.7.1
+  ansible: circleci/ansible@0.1.9
+  codecov: codecov/codecov@1.0.0
 
 jobs:
   build:
@@ -13,6 +14,7 @@ jobs:
       POSTGRES_DB: postgres
       POSTGRES_PASSWORD: ""
       DJANGO_SETTINGS_MODULE: config.settings.development
+      MY_ENV_VAR: "my-value"
     steps:
       - checkout
       - python/install-packages:
@@ -20,10 +22,9 @@ jobs:
       - run:
           name: Run tests
           command: tox
-      - persist_to_workspace:
-          root: .
-          paths:
-            - config-playbooks
+      - codecov/upload:
+          requires:
+            - build
   deploy:
     docker:
       - image: circleci/python:3.9.7-postgres
