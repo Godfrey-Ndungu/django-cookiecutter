@@ -27,7 +27,18 @@ jobs:
             pip install -r .circleci/requirements.txt
       - run:
           name: Run tests
-          command: tox
+          command: |
+            . venv/bin/activate
+            python manage.py test
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: test-results
+          destination: tr1
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - .
 
       - save_cache:
           key: deps1-{{ .Branch }}-{{ checksum ".circleci/requirements.txt" }}
