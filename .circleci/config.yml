@@ -1,5 +1,10 @@
 version: 4.0.0
 
+orbs:
+  python: circleci/python@2.1.1
+  ansible: circleci/ansible@0.2.3
+  codecov: codecov/codecov@3.2.4
+
 jobs:
   build:
     docker:
