@@ -68,11 +68,11 @@ workflows:
   version: 2
   build-and-deploy:
     jobs:
-      - python/rebuild:
+      - rebuild:
           filters:
             branches:
               only: develop
-      - python/rebuild:
+      - rebuild:
           filters:
             branches:
               only: release
