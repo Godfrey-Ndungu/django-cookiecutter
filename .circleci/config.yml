@@ -1,0 +1,65 @@
+version: 2.1
+
+orbs:
+  python: circleci/python@1.2.2
+  ansible: circleci/ansible@1.1.6
+
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.9.7-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: ""
+      DJANGO_SETTINGS_MODULE: config.settings.development
+    steps:
+      - checkout
+      - python/install-packages:
+          requirements-file: requirements.txt
+      - run:
+          name: Run tests
+          command: tox
+      - persist_to_workspace:
+          root: .
+          paths:
+            - config-playbooks
+  deploy:
+    docker:
+      - image: circleci/python:3.9.7-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: ""
+      ANSIBLE_FORCE_COLOR: "true"
+    steps:
+      - attach_workspace:
+          at: .
+      - ansible/install:
+          version: 2.9.9
+      - ansible/playbook:
+          inventory: config-playbooks/hosts
+          playbook: config-playbooks/ansible_update.yml
+          extra-vars: '{"env": "production", "project_path": "/path/to/project"}'
+      - run:
+          name: Confirm successful deployment
+          command: echo "Deployment to production was successful."
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - python/build:
+          filters:
+            branches:
+              only: develop
+      - python/build:
+          filters:
+            branches:
+              only: release
+      # - deploy:
+      #     requires:
+      #       - python/build
+      #     filters:
+      #       branches:
+      #         only: main
