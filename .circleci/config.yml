@@ -14,7 +14,11 @@ jobs:
       - image: circleci/postgres:9.6.2
         environment:
           POSTGRES_USER: root
-          POSTGRES_DB: circle_test
+          DATABASE_NAME: circle_test
+          DATABASE_URL: postgresql://root@localhost/circle_test?sslmode=disable
+          DATABASE_PASSWORD: ''
+          DATABASE_PORT: 5432
+          DATABASE_HOST: postgresql://root@localhost/circle_test?sslmode=disable
     steps:
       - checkout
       - restore_cache:
