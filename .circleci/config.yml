@@ -1,9 +1,4 @@
-version: 2.1
-
-orbs:
-  python: circleci/python@2.7.1
-  ansible: circleci/ansible@0.1.9
-  codecov: codecov/codecov@1.0.0
+version: 4.0.0
 
 jobs:
   build:
