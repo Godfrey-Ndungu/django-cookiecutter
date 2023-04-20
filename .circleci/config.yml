@@ -39,7 +39,7 @@ workflows:
       - build:
           filters:
             branches:
-              only: only: /.*/
+              only: /.*/
       - build:
           filters:
             branches:
