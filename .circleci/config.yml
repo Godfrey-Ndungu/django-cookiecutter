@@ -25,35 +25,34 @@ jobs:
           DB_PASSWORD: ''
           DB_PORT: 5432
           DB_HOST: localhost
+
     steps:
       - checkout
       - restore_cache:
-          key: deps1-{{ .Branch }}-{{ checksum ".circleci/requirements.txt" }}
+          keys:
+          - v1-dependencies-{{ checksum ".circleci/requirements.txt" }}
+          - v1-dependencies-
+
       - run:
+          name: install dependencies
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            python3 -m pip install --upgrade pip
             pip install -r .circleci/requirements.txt
+      - save_cache:
+          paths:
+            - ./venv
+          key: v1-dependencies-{{ checksum ".circleci/requirements.txt" }}
+        
+      # run tests!
       - run:
-          name: Run tests
+          name: run tests
           command: |
             . venv/bin/activate
             python manage.py test --settings=cookiecutter.development
-      - store_test_results:
-          path: test-results
       - store_artifacts:
-          path: test-results
-          destination: tr1
-      - persist_to_workspace:
-          root: ~/project
-          paths:
-            - .
-
-      - save_cache:
-          key: deps1-{{ .Branch }}-{{ checksum ".circleci/requirements.txt" }}
-          paths:
-            - "venv"
+          path: test-reports
+          destination: test-reports
 
 workflows:
   build-and-deploy:
