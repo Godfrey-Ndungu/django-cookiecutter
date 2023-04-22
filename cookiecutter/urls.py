@@ -27,8 +27,6 @@ urlpatterns = [
          SpectacularAPIView.as_view(), name='schema'),
     path('api/schema/redoc/',
          SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
-    path('404/', handler404, {'exception': Exception()}),
-    path('500/', handler500, {'exception': Exception()}),
 ]
 
 if settings.DEBUG:
