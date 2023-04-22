@@ -17,7 +17,6 @@ To add items to the `docs/source` folder, follow these steps:
       :maxdepth: 2
       :caption: My Item
 
-      my_item
 
    Replace `My Item` with the title of your item, and `my_item` with the name of the file you created in step 2.
 
