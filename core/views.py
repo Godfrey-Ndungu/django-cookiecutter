@@ -3,8 +3,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import exception_handler
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.decorators import api_view
-
+from django.http import JsonResponse
 
 def custom_exception_handler(exc, context):
     """
@@ -36,7 +35,6 @@ def custom_exception_handler(exc, context):
     return response
 
 
-@api_view(["GET"])
 def handler404(request, *args, **argv):
     response_data = {
         "error": {
@@ -47,13 +45,12 @@ def handler404(request, *args, **argv):
         }}
     response_headers = {"WWW-Authenticate":
                         'Basic realm="api"'}
-    return Response(
+    return JsonResponse(
         response_data,
         status=status.HTTP_400_BAD_REQUEST,
         headers=response_headers)
 
 
-@api_view(["GET"])
 def handler500(request, *args, **argv):
     response_data = {
         "error": {
@@ -65,7 +62,7 @@ def handler500(request, *args, **argv):
 
     response_headers = {"WWW-Authenticate":
                         'Basic realm="api"'}
-    return Response(
+    return JsonResponse(
         response_data,
         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         headers=response_headers,
