@@ -42,8 +42,8 @@ install:
     source $(VENV)/bin/activate && $(PIP) install -r requirements.txt
     $(PYTHON) manage.py migrate --settings=$(SETTINGS)
 
-# Clean docs/source directory
+# Clean docs/source directory except core folder
 clean:
-    find docs/source -type f ! -name 'conf.py' -delete
+    find docs/source -type f \( ! -path 'docs/source/core/*' -name '*.rst' \) -delete
     touch docs/source/index.rst
     touch docs/source/introduction.rst
