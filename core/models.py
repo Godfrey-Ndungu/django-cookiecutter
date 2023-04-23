@@ -5,6 +5,10 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
+from django.utils import timezone
+from django.core.exceptions import ValidationError
+
+import uuid
 
 
 class TrackableModel(models.Model):
@@ -301,3 +305,54 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             self.save()
             return True
         return False
+
+
+class OTP(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
+    code = models.CharField(max_length=4, unique=True)
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True, editable=True)
+
+    @classmethod
+    def create(cls, user):
+        # Mark all existing OTPs for the user as inactive
+        cls.objects.filter(user=user).update(active=False)
+
+        # Generate a unique 4-digit code
+        while True:
+            code = str(uuid.uuid4().int % 10000).zfill(4)
+            if not cls.objects.filter(code=code).exists():
+                break
+
+        return cls.objects.create(user=user, code=code)
+
+    @classmethod
+    def get_latest(cls, user):
+        return cls.objects.filter(user=user,
+                                  active=True).order_by('-created_at').first()
+
+    def is_valid(self):
+        # Check if the OTP is still active
+        if not self.active:
+            return False
+
+        # Check if the OTP has expired
+        expiration_time = self.updated_at + timezone.timedelta(hours=1)
+        if timezone.now() > expiration_time:
+            self.active = False
+            self.save()
+            return False
+
+        return True
+
+    def save(self, *args, **kwargs):
+        # Mark any existing OTPs for this user as inactive
+        OTP.objects.filter(user=self.user).update(active=False)
+
+        # Validate that the code is a 4-digit number
+        if not self.code.isdigit() or len(self.code) != 4:
+            raise ValidationError('Invalid OTP code')
+
+        super().save(*args, **kwargs)
