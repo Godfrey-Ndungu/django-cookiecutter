@@ -9,3 +9,4 @@ Models
    timestamped_model
    singleton_model
    custom_user
+   otp
