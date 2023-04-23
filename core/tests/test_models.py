@@ -1,6 +1,9 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.db.utils import IntegrityError
+from django.utils import timezone
+
+from core.models import OTP
 from core.models import Task
 
 
@@ -133,3 +136,56 @@ class CustomUserManagerTests(TestCase):
         self.assertFalse(user.verify_code("654321"))
         self.assertTrue(user.is_active)
         self.assertIsNone(user.verification_code)
+
+
+class OTPModelTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            password="password",
+            email="johndoe@example.com",
+            verification_code="1234")
+
+    def test_create(self):
+        otp = OTP.create(self.user)
+
+        self.assertTrue(otp.is_valid())
+        self.assertEqual(otp.user, self.user)
+
+        otp2 = OTP.create(self.user)
+        self.assertNotEqual(otp.code, otp2.code)
+
+        otp3 = OTP.create(self.user)
+        self.assertFalse(
+            OTP.objects.filter(
+                user=self.user,
+                active=True).exclude(
+                id=otp3.id).exists())
+
+    def test_get_latest(self):
+        OTP.create(self.user)
+        OTP.create(self.user)
+        otp3 = OTP.create(self.user)
+
+        latest_otp = OTP.get_latest(self.user)
+        self.assertEqual(latest_otp, otp3)
+
+        latest_otp = OTP.get_latest(self.user)
+        self.assertEqual(latest_otp, otp3)
+
+    def test_is_valid(self):
+        OTP.create(self.user)
+        otp = OTP.objects.get(user=self.user, active=True)
+
+        self.assertTrue(otp.is_valid())
+
+        otp.updated_at = otp.updated_at - \
+            timezone.timedelta(hours=1, minutes=1)
+        otp.save()
+        # Check that the save was successful
+        self.assertFalse(otp.is_valid())
+
+        self.assertFalse(otp.is_valid())
+
+        otp.active = False
+        otp.save()
+        # self.assertFalse(otp.is_valid())
