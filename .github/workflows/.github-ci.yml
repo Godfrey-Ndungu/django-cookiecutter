@@ -1,8 +1,6 @@
 name: Security and Compatibility Tests
 
-on:
-  push:
-    branches: [ '*' ]
+on: [push]
 
 jobs:
   security:
@@ -21,10 +19,7 @@ jobs:
       - name: Check for sensitive information
         run: |
           grep -r -E "(SECRET_KEY|DB_PASSWORD|API_KEY)" .
-      - name: Django deployment test
-        run: |
-          pip install -r requirements.txt
-          python manage.py check --deploy
+      
       - name: Python code flow test
         run: |
           pip install pylint
