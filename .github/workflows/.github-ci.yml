@@ -1,0 +1,50 @@
+name: Security and Compatibility Tests
+
+on:
+  push:
+    branches: [ '*' ]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Python security tests
+        run: |
+          pip install bandit
+          bandit -r .
+      - name: Ubuntu security tests
+        run: |
+          sudo apt update && sudo apt install -y lynis
+          lynis --quick --tests-only
+      - name: Check for sensitive information
+        run: |
+          grep -r -E "(SECRET_KEY|DB_PASSWORD|API_KEY)" .
+      - name: Django deployment test
+        run: |
+          pip install -r requirements.txt
+          python manage.py check --deploy
+      - name: Python code flow test
+        run: |
+          pip install pylint
+          pylint **/*.py
+      - name: Django code flow test
+        run: |
+          pip install -r requirements.txt
+          python manage.py test
+      - name: Django REST code flow test
+        run: |
+          pip install -r requirements.txt
+          python manage.py test  --pattern="*_tests.py"
+      - name: Check for vulnerabilities in dependencies
+        run: |
+          pip install safety
+          safety check
+      - name: Test for known security gaps
+        run: |
+          pip install bandit
+          bandit -r .
+      - name: Test for future compatibility
+        run: |
+          python -Werror::FutureWarning 
