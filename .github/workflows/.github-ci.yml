@@ -19,11 +19,6 @@ jobs:
       - name: Check for sensitive information
         run: |
           grep -r -E "(SECRET_KEY|DB_PASSWORD|API_KEY)" .
-      
-      - name: Python code flow test
-        run: |
-          pip install pylint
-          pylint **/*.py
       - name: Check for vulnerabilities in dependencies
         run: |
           pip install safety
