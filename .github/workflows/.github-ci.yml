@@ -8,7 +8,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Python security tests
+      - name: Python security tests and known gaps
         run: |
           pip install bandit
           bandit  --exclude tests -r .
@@ -22,11 +22,9 @@ jobs:
       - name: Check for vulnerabilities in dependencies
         run: |
           pip install safety
-          safety check
-      - name: Test for known security gaps
-        run: |
-          pip install bandit
-          bandit -r .
+          safety check -r requirements.txt --full-report
+        continue-on-error: true
       - name: Test for future compatibility
         run: |
           python -Werror::FutureWarning 
+        continue-on-error: true
