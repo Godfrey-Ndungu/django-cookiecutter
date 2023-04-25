@@ -17,7 +17,7 @@ jobs:
       - name: Ubuntu security tests
         run: |
           sudo apt update && sudo apt install -y lynis
-          lynis --quick --tests-only
+          lynis --tests-category security
       - name: Check for sensitive information
         run: |
           grep -r -E "(SECRET_KEY|DB_PASSWORD|API_KEY)" .
