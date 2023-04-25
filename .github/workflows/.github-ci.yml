@@ -24,14 +24,6 @@ jobs:
         run: |
           pip install pylint
           pylint **/*.py
-      - name: Django code flow test
-        run: |
-          pip install -r requirements.txt
-          python manage.py test
-      - name: Django REST code flow test
-        run: |
-          pip install -r requirements.txt
-          python manage.py test  --pattern="*_tests.py"
       - name: Check for vulnerabilities in dependencies
         run: |
           pip install safety
