@@ -1,5 +1,4 @@
 from django.db import models
-from django.contrib.postgres.fields import JSONField
 from apps.accounts.models import CustomUser
 
 
@@ -25,38 +24,16 @@ class TrackableModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(
-        CustomUser, on_delete=models.PROTECT, related_name="%(class)s_created_by"
+        CustomUser, on_delete=models.PROTECT,
+        related_name="%(class)s_created_by"
     )
     updated_by = models.ForeignKey(
-        CustomUser, on_delete=models.PROTECT, related_name="%(class)s_updated_by"
+        CustomUser, on_delete=models.PROTECT,
+        related_name="%(class)s_updated_by"
     )
-    history = JSONField(default=list, blank=True)
 
     class Meta:
         abstract = True
-
-    def save(self, *args, **kwargs):
-        """
-        Overrides the save method to update the history
-            field before saving the model instance.
-        """
-        if self.pk is None:
-            self.history.append(
-                {
-                    "timestamp": self.created_at,
-                    "user": self.created_by.id,
-                    "action": "created",
-                }
-            )
-        else:
-            self.history.append(
-                {
-                    "timestamp": self.updated_at,
-                    "user": self.updated_by.id,
-                    "action": "updated",
-                }
-            )
-        super().save(*args, **kwargs)
 
 
 class TimestampedModel(TrackableModel):
@@ -79,40 +56,6 @@ class TimestampedModel(TrackableModel):
 
     class Meta:
         abstract = True
-
-
-class SingletonModel(models.Model):
-    """
-    Abstract model that provides functionality for only
-        allowing a single instance of a model to be created.
-
-    Attributes:
-        singleton_id (PositiveIntegerField):
-            A field that stores the ID of the singleton instance.
-            This field should always have a value of 1.
-    """
-
-    singleton_id = models.PositiveIntegerField(primary_key=True, default=1)
-
-    class Meta:
-        abstract = True
-
-    def save(self, *args, **kwargs):
-        """
-        Overrides the save method to prevent multiple
-            instances from being created.
-        """
-        self.pk = 1
-        super().save(*args, **kwargs)
-
-    @classmethod
-    def load(cls):
-        """
-        Returns the singleton instance of the model.
-            Creates the instance if it does not exist yet.
-        """
-        obj, created = cls.objects.get_or_create(pk=1)
-        return obj
 
 
 class Task(models.Model):
