@@ -46,9 +46,6 @@ class CustomUser(AbstractBaseUser):
     phone_number = models.CharField(
         verbose_name="Phone Number", max_length=15, blank=True
     )
-    confirmation_code = models.UUIDField(
-        verbose_name="Confirmation Code", default=uuid.uuid4
-    )
 
     # Fields required by Django
     is_active = models.BooleanField(default=False)
@@ -68,33 +65,6 @@ class CustomUser(AbstractBaseUser):
 
     def __str__(self):
         return self.email
-
-    def generate_confirmation_code(self):
-        """
-        Generate a confirmation code that is an 8-letter UUID.
-        """
-        self.confirmation_code = uuid.uuid4().hex[:8]
-
-    def save(self, *args, **kwargs):
-        """
-        Overriding the save method to generate
-        a confirmation code before saving the user instance.
-        """
-        if not self.confirmation_code:
-            self.generate_confirmation_code()
-        super().save(*args, **kwargs)
-
-    def check_confirmation_code(self, confirmation_code):
-        """
-        Check if the provided confirmation code matches
-        the user's confirmation code and mark the user as active.
-        """
-        if self.confirmation_code == confirmation_code:
-            self.is_active = True
-            self.confirmation_code = None
-            self.save()
-            return True
-        return False
 
 
 class UserVisitHistory(models.Model):
@@ -177,14 +147,12 @@ class OTP(models.Model):
             if not cls.objects.filter(code=code).exists():
                 break
 
-        return cls.objects.create(user=CustomUser, code=code)
+        return cls.objects.create(user=user, code=code)
 
     @classmethod
     def get_latest(cls, user):
-        return (
-            cls.objects.filter(
-                user=CustomUser,
-                active=True).order_by("-created_at").first())
+        return cls.objects.filter(user=user,
+                                  active=True).order_by('-created_at').first()
 
     def is_valid(self):
         # Check if the OTP is still active
@@ -206,6 +174,6 @@ class OTP(models.Model):
 
         # Validate that the code is a 4-digit number
         if not self.code.isdigit() or len(self.code) != 4:
-            raise ValidationError("Invalid OTP code")
+            raise ValidationError('Invalid OTP code')
 
         super().save(*args, **kwargs)
