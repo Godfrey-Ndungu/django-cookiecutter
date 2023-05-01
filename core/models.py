@@ -1,14 +1,6 @@
 from django.db import models
 from django.contrib.postgres.fields import JSONField
-from django.contrib.auth.models import User
-from django.contrib.auth.base_user import BaseUserManager
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
-from django.utils.translation import gettext_lazy as _
-from django.conf import settings
-from django.utils import timezone
-from django.core.exceptions import ValidationError
-
-import uuid
+from accounts.models import CustomUser
 
 
 class TrackableModel(models.Model):
@@ -33,10 +25,10 @@ class TrackableModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(
-        User, on_delete=models.PROTECT, related_name="%(class)s_created_by"
+        CustomUser, on_delete=models.PROTECT, related_name="%(class)s_created_by"
     )
     updated_by = models.ForeignKey(
-        User, on_delete=models.PROTECT, related_name="%(class)s_updated_by"
+        CustomUser, on_delete=models.PROTECT, related_name="%(class)s_updated_by"
     )
     history = JSONField(default=list, blank=True)
 
@@ -176,183 +168,3 @@ class Task(models.Model):
     def save(self, *args, **kwargs):
         """Save the task"""
         super(Task, self).save(*args, **kwargs)
-
-
-class UserVisitHistory(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    url = models.CharField(max_length=255)
-    referer = models.CharField(max_length=255, null=True, blank=True)
-    user_agent = models.TextField()
-
-    class Meta:
-        verbose_name_plural = "User visit history"
-        ordering = ["-timestamp"]
-
-
-class LoginHistoryTrail(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    successful = models.BooleanField(default=False)
-    ip_address = models.GenericIPAddressField()
-    user_agent = models.TextField()
-    location = models.CharField(max_length=255, null=True, blank=True)
-
-    class Meta:
-        verbose_name_plural = "Login history trail"
-        ordering = ["-timestamp"]
-
-
-class LoginAttemptsHistory(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    successful = models.BooleanField(default=False)
-    ip_address = models.GenericIPAddressField()
-    user_agent = models.TextField()
-    location = models.CharField(max_length=255, null=True, blank=True)
-
-    class Meta:
-        verbose_name_plural = "Login attempts history"
-        ordering = ["-timestamp"]
-
-
-class ExtraData(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    browser = models.CharField(max_length=255)
-    ip_address = models.GenericIPAddressField()
-    device = models.CharField(max_length=255, null=True, blank=True)
-    os = models.CharField(max_length=255, null=True, blank=True)
-    location = models.CharField(max_length=255, null=True, blank=True)
-
-    class Meta:
-        verbose_name_plural = "Extra data"
-        ordering = ["-timestamp"]
-
-
-class CustomUserManager(BaseUserManager):
-    def create_user(
-            self,
-            email,
-            verification_code,
-            password=None,
-            **extra_fields):
-        """
-        Creates and saves a User with the given email and verification code.
-        """
-        if not email:
-            raise ValueError(_("The Email field must be set"))
-        user = self.model(email=self.normalize_email(email), **extra_fields)
-        user.set_password(password)
-        user.verification_code = verification_code
-        user.save()
-        return user
-
-    def create_superuser(
-            self,
-            email,
-            verification_code,
-            password=None,
-            **extra_fields):
-        """
-        Creates and saves a superuser with the given
-            email and verification code.
-        """
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
-
-        if extra_fields.get("is_staff") is not True:
-            raise ValueError(_("Superuser must have is_staff=True."))
-        if extra_fields.get("is_superuser") is not True:
-            raise ValueError(_("Superuser must have is_superuser=True."))
-
-        return self.create_user(
-            email,
-            verification_code,
-            password,
-            **extra_fields)
-
-
-class CustomUser(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(unique=True)
-    is_active = models.BooleanField(default=False)
-    is_staff = models.BooleanField(default=False)
-    verification_code = models.CharField(max_length=10, blank=True, null=True)
-
-    objects = CustomUserManager()
-
-    USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["verification_code"]
-
-    def __str__(self):
-        return self.email
-
-    def verify_code(self, code):
-        """
-        Verify the verification code entered by user.
-        """
-        if self.verification_code == code:
-            self.verification_code = None
-            self.is_active = True
-            self.save()
-            return True
-        return False
-
-
-class OTP(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
-    code = models.CharField(max_length=4, unique=True)
-    active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True, editable=True)
-
-    @classmethod
-    def create(cls, user):
-        # Mark all existing OTPs for the user as inactive
-        cls.objects.filter(user=user).update(active=False)
-
-        # Generate a unique 4-digit code
-        while True:
-            code = str(uuid.uuid4().int % 10000).zfill(4)
-            if not cls.objects.filter(code=code).exists():
-                break
-
-        return cls.objects.create(user=user, code=code)
-
-    @classmethod
-    def get_latest(cls, user):
-        return cls.objects.filter(user=user,
-                                  active=True).order_by('-created_at').first()
-
-    def is_valid(self):
-        # Check if the OTP is still active
-        if not self.active:
-            return False
-
-        # Check if the OTP has expired
-        expiration_time = self.updated_at + timezone.timedelta(hours=1)
-        if timezone.now() > expiration_time:
-            self.active = False
-            self.save()
-            return False
-
-        return True
-
-    def save(self, *args, **kwargs):
-        # Mark any existing OTPs for this user as inactive
-        OTP.objects.filter(user=self.user).update(active=False)
-
-        # Validate that the code is a 4-digit number
-        if not self.code.isdigit() or len(self.code) != 4:
-            raise ValidationError('Invalid OTP code')
-
-        super().save(*args, **kwargs)

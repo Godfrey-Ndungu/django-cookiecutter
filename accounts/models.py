@@ -1,0 +1,211 @@
+from django.contrib.auth.models import BaseUserManager
+from django.contrib.auth.base_user import AbstractBaseUser
+from django.db import models
+from django.utils import timezone
+from django.core.exceptions import ValidationError
+
+import uuid
+
+
+class CustomUserManager(BaseUserManager):
+    """
+    Custom user model manager where email
+    is the unique identifier for authentication
+    instead of username.
+    """
+
+    def create_user(self, email, password=None, **extra_fields):
+        """
+        Create and save a User with the given email and password.
+        """
+        if not email:
+            raise ValueError("The Email field must be set")
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.is_active = False
+        user.save()
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        """
+        Create and save a SuperUser with the given email and password.
+        """
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        return self.create_user(email, password, **extra_fields)
+
+
+class CustomUser(AbstractBaseUser):
+    """
+    Custom user model which extends
+    the Django User model and includes additional fields.
+    """
+
+    email = models.EmailField(verbose_name="Email", unique=True)
+    phone_number = models.CharField(
+        verbose_name="Phone Number", max_length=15, blank=True
+    )
+    confirmation_code = models.UUIDField(
+        verbose_name="Confirmation Code", default=uuid.uuid4
+    )
+
+    # Fields required by Django
+    is_active = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
+    date_joined = models.DateTimeField(auto_now_add=True)
+
+    # Fields used for authentication
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = []
+
+    objects = CustomUserManager()
+
+    class Meta:
+        verbose_name = "Custom User"
+        verbose_name_plural = "Custom Users"
+
+    def __str__(self):
+        return self.email
+
+    def generate_confirmation_code(self):
+        """
+        Generate a confirmation code that is an 8-letter UUID.
+        """
+        self.confirmation_code = uuid.uuid4().hex[:8]
+
+    def save(self, *args, **kwargs):
+        """
+        Overriding the save method to generate
+        a confirmation code before saving the user instance.
+        """
+        if not self.confirmation_code:
+            self.generate_confirmation_code()
+        super().save(*args, **kwargs)
+
+    def check_confirmation_code(self, confirmation_code):
+        """
+        Check if the provided confirmation code matches
+        the user's confirmation code and mark the user as active.
+        """
+        if self.confirmation_code == confirmation_code:
+            self.is_active = True
+            self.confirmation_code = None
+            self.save()
+            return True
+        return False
+
+
+class UserVisitHistory(models.Model):
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    url = models.CharField(max_length=255)
+    referer = models.CharField(max_length=255, null=True, blank=True)
+    user_agent = models.TextField()
+
+    class Meta:
+        verbose_name_plural = "User visit history"
+        ordering = ["-timestamp"]
+
+
+class LoginHistoryTrail(models.Model):
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    successful = models.BooleanField(default=False)
+    ip_address = models.GenericIPAddressField()
+    user_agent = models.TextField()
+    location = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = "Login history trail"
+        ordering = ["-timestamp"]
+
+
+class LoginAttemptsHistory(models.Model):
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    successful = models.BooleanField(default=False)
+    ip_address = models.GenericIPAddressField()
+    user_agent = models.TextField()
+    location = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = "Login attempts history"
+        ordering = ["-timestamp"]
+
+
+class ExtraData(models.Model):
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    browser = models.CharField(max_length=255)
+    ip_address = models.GenericIPAddressField()
+    device = models.CharField(max_length=255, null=True, blank=True)
+    os = models.CharField(max_length=255, null=True, blank=True)
+    location = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = "Extra data"
+        ordering = ["-timestamp"]
+
+
+class OTP(models.Model):
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE)
+    code = models.CharField(max_length=4, unique=True)
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True, editable=True)
+
+    @classmethod
+    def create(cls, user):
+        # Mark all existing OTPs for the user as inactive
+        cls.objects.filter(user=user).update(active=False)
+
+        # Generate a unique 4-digit code
+        while True:
+            code = str(uuid.uuid4().int % 10000).zfill(4)
+            if not cls.objects.filter(code=code).exists():
+                break
+
+        return cls.objects.create(user=CustomUser, code=code)
+
+    @classmethod
+    def get_latest(cls, user):
+        return (
+            cls.objects.filter(
+                user=CustomUser,
+                active=True).order_by("-created_at").first())
+
+    def is_valid(self):
+        # Check if the OTP is still active
+        if not self.active:
+            return False
+
+        # Check if the OTP has expired
+        expiration_time = self.updated_at + timezone.timedelta(hours=1)
+        if timezone.now() > expiration_time:
+            self.active = False
+            self.save()
+            return False
+
+        return True
+
+    def save(self, *args, **kwargs):
+        # Mark any existing OTPs for this user as inactive
+        OTP.objects.filter(user=self.user).update(active=False)
+
+        # Validate that the code is a 4-digit number
+        if not self.code.isdigit() or len(self.code) != 4:
+            raise ValidationError("Invalid OTP code")
+
+        super().save(*args, **kwargs)

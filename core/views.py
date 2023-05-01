@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.http import JsonResponse
 
+
 def custom_exception_handler(exc, context):
     """
     Custom exception handler to handle PermissionDenied
