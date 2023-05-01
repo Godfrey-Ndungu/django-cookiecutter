@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.postgres.fields import JSONField
-from accounts.models import CustomUser
+from apps.accounts.models import CustomUser
 
 
 class TrackableModel(models.Model):

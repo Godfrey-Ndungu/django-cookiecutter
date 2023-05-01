@@ -19,8 +19,8 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "drf_spectacular",
     "drf_spectacular_sidecar",
-    "core",
-    "accounts",
+    "apps.core",
+    "apps.accounts",
 ]
 
 MIDDLEWARE = [

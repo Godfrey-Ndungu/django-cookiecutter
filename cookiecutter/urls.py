@@ -10,7 +10,7 @@ from rest_framework_simplejwt.views import (
 from rest_framework_simplejwt.views import TokenVerifyView
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView
 
-from core.signals_loader import load_signals
+from apps.core.signals_loader import load_signals
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -33,7 +33,7 @@ if settings.DEBUG:
                 serve, {"document_root": settings.MEDIA_ROOT})
     ]
 
-handler404 = 'core.views.handler404'
-handler500 = 'core.views.handler500'
+handler404 = 'apps.core.views.handler404'
+handler500 = 'apps.core.views.handler500'
 
 load_signals()
