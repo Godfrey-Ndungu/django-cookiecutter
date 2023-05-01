@@ -4,6 +4,7 @@ omit =
     */manage.py
     */settings.py
     */development.py
+    */storage_backends.py
     */sphinx_build.py
     */wsgi.py
     */utils.py
