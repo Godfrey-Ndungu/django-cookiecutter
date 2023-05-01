@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 from apps.accounts.models import CustomUser
 from apps.accounts.models import UserVisitHistory
@@ -194,6 +195,67 @@ class OTPModelTest(TestCase):
             email="johndoe@example.com",
         )
 
+    def test_create_new_otp_for_user(self):
+        # create an OTP for the user
+        otp = OTP.create(user=self.user)
+
+        # assert that the OTP is for the correct user
+        self.assertEqual(otp.user, self.user)
+
+        # assert that the OTP code is a 4-digit number
+        self.assertTrue(otp.code.isdigit())
+        self.assertEqual(len(otp.code), 4)
+
+        # assert that the OTP is active
+        self.assertTrue(otp.active)
+
+        # assert that the OTP was created
+        self.assertIsNotNone(otp.created_at)
+
+        # assert that the OTP was updated
+        self.assertIsNotNone(otp.updated_at)
+
+        # assert that no other OTPs for the user are active
+        self.assertFalse(OTP.objects.filter(
+            user=self.user, active=True).exclude(id=otp.id).exists())
+
+    def test_create_multiple_otps_for_user(self):
+        # create two OTPs for the user
+        otp1 = OTP.create(user=self.user)
+        otp2 = OTP.create(user=self.user)
+
+        # assert that the OTPs are for the correct user
+        self.assertEqual(otp1.user, self.user)
+        self.assertEqual(otp2.user, self.user)
+
+        # assert that the OTP codes are unique
+        self.assertNotEqual(otp1.code, otp2.code)
+
+        # assert that the OTPs are active
+        self.assertTrue(otp1.active)
+        self.assertTrue(otp2.active)
+
+        # assert that the OTPs were created
+        self.assertIsNotNone(otp1.created_at)
+        self.assertIsNotNone(otp2.created_at)
+
+        # assert that the OTPs were updated
+        self.assertIsNotNone(otp1.updated_at)
+        self.assertIsNotNone(otp2.updated_at)
+
+        # assert that no other OTPs for the user are active
+        self.assertFalse(
+            OTP.objects.filter(user=self.user, active=True).exclude(
+                id__in=[otp1.id, otp2.id]).exists()
+        )
+
+    def test_create_otp_with_invalid_code(self):
+        with self.assertRaises(ValidationError):
+            # create an OTP with an invalid code
+            otp = OTP.create(user=self.user)
+            otp.code = 'abcd'
+            otp.save()
+
     def test_create(self):
         otp = OTP.create(self.user)
 
@@ -209,6 +271,14 @@ class OTPModelTest(TestCase):
                 user=self.user,
                 active=True).exclude(
                 id=otp3.id).exists())
+
+    def test_invalid_otp_code(self):
+        otp = OTP.create(self.user)
+
+        with self.assertRaises(ValidationError):
+
+            otp.code = '123'
+            otp.save()
 
     def test_get_latest(self):
         OTP.create(self.user)
