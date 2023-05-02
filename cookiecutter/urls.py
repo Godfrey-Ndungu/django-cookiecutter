@@ -10,7 +10,6 @@ from rest_framework_simplejwt.views import (
 from rest_framework_simplejwt.views import TokenVerifyView
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView
 
-from apps.core.signals_loader import load_signals
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -35,5 +34,3 @@ if settings.DEBUG:
 
 handler404 = 'apps.core.views.handler404'
 handler500 = 'apps.core.views.handler500'
-
-load_signals()
