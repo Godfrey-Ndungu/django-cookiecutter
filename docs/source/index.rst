@@ -1,7 +1,7 @@
-.. django-minimal-cookiecutter documentation master file, created by
+.. django-cookiecutter documentation master file, created by
    sphinx-quickstart on Wed Mar 31 2023.
 
-Welcome to django-minimal-cookiecutter's documentation!
+Welcome to django-cookiecutter's documentation!
 
 ======================================================
 
@@ -12,6 +12,7 @@ Welcome to django-minimal-cookiecutter's documentation!
    introduction
    how_to/how_to
    core/core
+   accounts/accounts
 
 Indices and tables
 ==================

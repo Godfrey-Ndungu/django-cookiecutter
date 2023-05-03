@@ -1,7 +1,7 @@
 Customize Ansible Variables
 =============================
 
-Ansible is an open-source automation tool that can be used for a wide range of tasks, including configuration management, deployment, and orchestration. The `django-minimal-cookiecutter` project includes an Ansible playbook that can be used to set up your development environment. In this guide, you'll learn how to customize the Ansible variables in this playbook to suit your needs.
+Ansible is an open-source automation tool that can be used for a wide range of tasks, including configuration management, deployment, and orchestration. The `django-cookiecutter` project includes an Ansible playbook that can be used to set up your development environment. In this guide, you'll learn how to customize the Ansible variables in this playbook to suit your needs.
 
 Step 1: Modify the PostgreSQL variables
 

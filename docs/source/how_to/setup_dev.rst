@@ -1,7 +1,7 @@
-Set Up Development with django-minimal-cookiecutter
+Set Up Development with django-cookiecutter
 =======================================================
 
-This guide will walk you through the steps to set up a development environment for the `django-minimal-cookiecutter` project.
+This guide will walk you through the steps to set up a development environment for the `django-cookiecutter` project.
 
 Prerequisites
 
@@ -17,8 +17,8 @@ First, clone the project repository by running the following command:
 
 .. code-block:: bash
 
-    git clone https://github.com/Godfrey-Ndungu/django-minimal-cookiecutter.git
-    cd django-minimal-cookiecutter
+    git clone https://github.com/Godfrey-Ndungu/django-cookiecutter.git
+    cd django-cookiecutter
 
 Step 2: Make the Makefile Executable
 

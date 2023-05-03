@@ -38,8 +38,30 @@ class CustomUserManager(BaseUserManager):
 
 class CustomUser(AbstractBaseUser):
     """
-    Custom user model which extends
-    the Django User model and includes additional fields.
+    A custom user model that extends Django's built-in User model.
+
+    Fields:
+        email: The user's email address (unique).
+        phone_number: The user's phone number (optional).
+        is_active: Whether the user account is active.
+        is_staff: Whether the user is a member of the staff.
+        is_superuser: Whether the user has all permissions.
+        date_joined: The date and time the user account was created.
+
+    Attributes:
+        USERNAME_FIELD: The field to use for authentication
+            (email in this case).
+        REQUIRED_FIELDS: A list of required fields for creating a user.
+
+    Methods:
+        __str__: Returns the user's email address.
+
+    Managers:
+        objects: The manager for this model.
+
+    Meta:
+        verbose_name: A human-readable name for this model (singular).
+        verbose_name_plural: A human-readable name for this model (plural).
     """
 
     email = models.EmailField(verbose_name="Email", unique=True)
@@ -68,6 +90,23 @@ class CustomUser(AbstractBaseUser):
 
 
 class UserVisitHistory(models.Model):
+    """
+    Model to store the history of user visits to the site.
+
+    Fields:
+        user: A foreign key to the user who made the visit.
+        timestamp: The date and time of the visit.
+        url: The URL of the page visited.
+        referer: The URL of the referring page, if any.
+        user_agent: The user agent string for the browser
+            or other client used to make the visit.
+
+    Meta:
+        verbose_name_plural: A human-readable name for this model (plural).
+        ordering: The default ordering for querysets of this model,
+            by timestamp in descending order.
+    """
+
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE)
@@ -82,6 +121,25 @@ class UserVisitHistory(models.Model):
 
 
 class LoginHistoryTrail(models.Model):
+    """
+    Model to store a trail of login attempts made by users.
+
+    Fields:
+        user: A foreign key to the user who made the login attempt.
+        timestamp: The date and time of the login attempt.
+        successful: Whether the login attempt was successful.
+        ip_address: The IP address used to make the login attempt.
+        user_agent: The user agent string for the browser or other client
+            used to make the login attempt.
+        location: The location (city, country) of the IP address used
+            to make the login attempt, if available.
+
+    Meta:
+        verbose_name_plural: A human-readable name for this model (plural).
+        ordering: The default ordering for querysets of this model,
+            by timestamp in descending order.
+    """
+
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE)
@@ -97,6 +155,25 @@ class LoginHistoryTrail(models.Model):
 
 
 class LoginAttemptsHistory(models.Model):
+    """
+    Model to store a history of login attempts made by users.
+
+    Fields:
+        user: A foreign key to the user who made the login attempt.
+        timestamp: The date and time of the login attempt.
+        successful: Whether the login attempt was successful.
+        ip_address: The IP address used to make the login attempt.
+        user_agent: The user agent string for the browser or
+            other client used to make the login attempt.
+        location: The location (city, country) of the IP
+            address used to make the login attempt, if available.
+
+    Meta:
+        verbose_name_plural: A human-readable name for this model (plural).
+        ordering: The default ordering for querysets of this model,
+            by timestamp in descending order.
+    """
+
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE)
@@ -112,6 +189,10 @@ class LoginAttemptsHistory(models.Model):
 
 
 class ExtraData(models.Model):
+    """
+    Model for storing extra data related to user activity, such as browser,
+    IP address, device, operating system, and location.
+    """
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE)
@@ -128,6 +209,10 @@ class ExtraData(models.Model):
 
 
 class OTP(models.Model):
+    """
+    Model for storing one-time passwords (OTPs) associated with a user.
+    """
+
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE)
@@ -138,6 +223,16 @@ class OTP(models.Model):
 
     @classmethod
     def create(cls, user):
+        """
+        Creates a new OTP for the given user.
+
+        Args:
+            user (CustomUser): The user associated with the new OTP.
+
+        Returns:
+            The newly created OTP.
+        """
+
         # Mark all existing OTPs for the user as inactive
         cls.objects.filter(user=user).update(active=False)
 
@@ -151,10 +246,26 @@ class OTP(models.Model):
 
     @classmethod
     def get_latest(cls, user):
+        """
+        Gets the latest active OTP for the given user.
+
+        Args:
+            user (CustomUser): The user associated with the OTP.
+
+        Returns:
+            The latest active OTP, or None if there are no active OTPs.
+        """
+
         return cls.objects.filter(user=user,
                                   active=True).order_by('-created_at').first()
 
     def is_valid(self):
+        """
+        Checks whether or not the OTP is valid (i.e. active and not expired).
+
+        Returns:
+            True if the OTP is valid, False otherwise.
+        """
         # Check if the OTP is still active
         if not self.active:
             return False
@@ -169,6 +280,17 @@ class OTP(models.Model):
         return True
 
     def save(self, *args, **kwargs):
+        """
+        Saves the OTP to the database.
+
+        Args:
+            *args
+            **kwargs
+
+        Raises:
+            ValidationError: If the code is not a 4-digit number.
+        """
+
         # Mark any existing OTPs for this user as inactive
         OTP.objects.filter(user=self.user).update(active=False)
 
