@@ -1,0 +1,28 @@
+{% extends "!layout.html" %}
+  {% block footer %} {{ super() }}
+
+  <style>
+    /* Sidebar header (and topbar for mobile) */
+    .wy-side-nav-search, .wy-nav-top {
+      background: brown;
+    }
+    /* Sidebar */
+    .wy-nav-side {
+      background: #f87400;
+    }
+    .wy-nav-side .caption-text{
+      color:rgb(255, 255, 255);
+    }
+
+    .wy-nav-side a{
+      color:white;
+      font-size: medium;
+      font-weight: 700;
+    }
+    .highlight {background-color: #e7f2fa !important;
+    }
+
+    strong { color: #850505 !important; font-style: italic !important };
+
+  </style>
+{% endblock %}
