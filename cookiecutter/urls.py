@@ -13,7 +13,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api-auth/", include("rest_framework.urls")),
+    path("", include("apps.accounts.urls")),
     path("api/token/",
          TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/",
