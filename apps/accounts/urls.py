@@ -5,9 +5,12 @@ from .views import (
     ChangePasswordAPIView,
     ChangeProfileAPIView,
     ChangeEmailAPIView,
+    CustomUserViewSet
 )
 
 router = routers.SimpleRouter()
+
+router.register(r'users', CustomUserViewSet, basename='users')
 
 urlpatterns = [
     path("register/",
