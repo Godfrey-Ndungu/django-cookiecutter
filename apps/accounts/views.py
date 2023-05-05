@@ -1,4 +1,6 @@
-from rest_framework import generics, permissions, status, viewsets
+from rest_framework import generics, permissions, status, viewsets, filters
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import action
@@ -110,17 +112,10 @@ class CustomUserViewSet(viewsets.ModelViewSet):
 
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
-
-    def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires.
-        """
-        if self.request.method in permissions.SAFE_METHODS:
-            return [permissions.AllowAny()]
-        elif self.request.user.is_staff:
-            return [permissions.IsAdminUser()]
-        else:
-            return [permissions.IsAuthenticated()]
+    permission_classes = (IsAdminUser,)
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['phone_number', 'email', 'is_active', 'is_staff']
+    ordering_fields = ['email', 'date_joined']
 
     @action(detail=False, methods=['GET'])
     def list_accounts(self, request):
@@ -142,7 +137,8 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(user)
             return Response(serializer.data)
         elif request.method in ['PUT', 'PATCH', 'POST']:
-            serializer = self.get_serializer(user, data=request.data, partial=True)
+            serializer = self.get_serializer(user,
+                                             data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
