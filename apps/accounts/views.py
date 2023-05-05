@@ -1,12 +1,15 @@
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.decorators import action
+
 from .models import CustomUser
 from .serializers import (
     RegistrationSerializer,
     ChangePasswordSerializer,
     ChangeProfileSerializer,
     ChangeEmailSerializer,
+    CustomUserSerializer
 )
 
 
@@ -98,3 +101,48 @@ class ChangeEmailAPIView(APIView):
                 {"message": "Email address changed successfully"},
                 status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CustomUserViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows viewing, updating, and creating CustomUsers
+    """
+
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer
+
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.request.method in permissions.SAFE_METHODS:
+            return [permissions.AllowAny()]
+        elif self.request.user.is_staff:
+            return [permissions.IsAdminUser()]
+        else:
+            return [permissions.IsAuthenticated()]
+
+    @action(detail=False, methods=['GET'])
+    def list_accounts(self, request):
+        """
+        List all CustomUsers
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['GET', 'PUT', 'PATCH', 'POST'])
+    def account_details(self, request, pk=None):
+        """
+        Retrieve, update or create a CustomUser
+        """
+        user = self.get_object()
+
+        if request.method == 'GET':
+            serializer = self.get_serializer(user)
+            return Response(serializer.data)
+        elif request.method in ['PUT', 'PATCH', 'POST']:
+            serializer = self.get_serializer(user, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)

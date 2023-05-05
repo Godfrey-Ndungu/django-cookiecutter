@@ -106,3 +106,9 @@ class ChangeEmailSerializer(serializers.Serializer):
         instance.email = validated_data["email"]
         instance.save()
         return instance
+
+
+class CustomUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = "__all__"
