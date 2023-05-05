@@ -19,6 +19,36 @@ class RegistrationAPIView(generics.CreateAPIView):
     serializer_class = RegistrationSerializer
     permission_classes = (permissions.AllowAny,)
 
+    def create(self, request, *args, **kwargs):
+        """
+        Create a new user and return a response.
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data.get("email")
+        password = serializer.validated_data.get("password")
+        is_superuser = serializer.validated_data.get("is_superuser", False)
+
+        if is_superuser:
+            user = CustomUser.objects.create_superuser(
+                email=email, password=password)
+        else:
+            user = CustomUser.objects.create_user(
+                email=email, password=password)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            self.get_response_data(user),
+            status=status.HTTP_201_CREATED, headers=headers
+        )
+
+    def get_response_data(self, user):
+        """
+        Get the response data for a successful registration.
+        """
+        return {"email": user.email}
+
 
 class ChangePasswordAPIView(APIView):
     """
