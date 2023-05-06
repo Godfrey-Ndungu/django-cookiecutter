@@ -37,7 +37,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
-class CustomUser(AbstractBaseUser,PermissionsMixin):
+class CustomUser(AbstractBaseUser, PermissionsMixin):
     """
     A custom user model that extends Django's built-in User model.
 
