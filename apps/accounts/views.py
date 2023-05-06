@@ -32,15 +32,16 @@ class RegistrationAPIView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
 
         email = serializer.validated_data.get("email")
+        phone_number = serializer.validated_data.get("phone_number", "")
         password = serializer.validated_data.get("password")
         is_superuser = serializer.validated_data.get("is_superuser", False)
 
         if is_superuser:
             user = CustomUser.objects.create_superuser(
-                email=email, password=password)
+                email=email, phone_number=phone_number, password=password)
         else:
             user = CustomUser.objects.create_user(
-                email=email, password=password)
+                email=email, phone_number=phone_number, password=password)
 
         headers = self.get_success_headers(serializer.data)
         return Response(
@@ -67,7 +68,9 @@ class ChangePasswordAPIView(APIView):
         serializer = self.serializer_class(
             data=request.data, context={"request": request})
         if serializer.is_valid():
-            serializer.save()
+            user = request.user
+            user.set_password(serializer.data.get("new_password"))
+            user.save()
             return Response(
                 {"message": "Password changed successfully"},
                 status=status.HTTP_200_OK)
@@ -98,7 +101,8 @@ class ChangeEmailAPIView(APIView):
         serializer = self.serializer_class(
             data=request.data, context={"request": request})
         if serializer.is_valid():
-            serializer.save()
+            user = request.user
+            serializer.update(user, serializer.validated_data)
             return Response(
                 {"message": "Email address changed successfully"},
                 status=status.HTTP_200_OK)

@@ -1,5 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+
 from .models import CustomUser
 
 
@@ -52,7 +55,7 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     old_password = serializers.CharField(
         max_length=128,
-        min_length=8,
+        min_length=4,
         write_only=True,
     )
     new_password = serializers.CharField(
@@ -83,11 +86,13 @@ class ChangeProfileSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ("phone_number",)
 
-    def update(self, instance, validated_data):
-        instance.phone_number = validated_data.get("phone_number",
-                                                   instance.phone_number)
-        instance.save()
-        return instance
+        def update(self, instance, validated_data):
+            if not validated_data:
+                raise serializers.ValidationError("Empty data not allowed.")
+            instance.phone_number = validated_data.get("phone_number",
+                                                       instance.phone_number)
+            instance.save()
+            return instance
 
 
 class ChangeEmailSerializer(serializers.Serializer):
@@ -102,6 +107,20 @@ class ChangeEmailSerializer(serializers.Serializer):
             raise serializers.ValidationError("Email is already in use.")
         return email
 
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        email = attrs.get("email")
+
+        if not email:
+            raise serializers.ValidationError("Email is required.")
+
+        try:
+            validate_email(email)
+        except ValidationError as e:
+            raise serializers.ValidationError("Invalid email format.") from e
+
+        return attrs
+
     def update(self, instance, validated_data):
         instance.email = validated_data["email"]
         instance.save()
@@ -112,4 +131,3 @@ class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         exclude = ('password',)
-        
