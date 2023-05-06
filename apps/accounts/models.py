@@ -3,6 +3,7 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import PermissionsMixin
 
 import uuid
 
@@ -36,7 +37,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
-class CustomUser(AbstractBaseUser):
+class CustomUser(AbstractBaseUser,PermissionsMixin):
     """
     A custom user model that extends Django's built-in User model.
 
