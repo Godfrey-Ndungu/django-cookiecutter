@@ -1,9 +1,11 @@
 from rest_framework import generics, permissions, status, viewsets, filters
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.decorators import action
+from django.db import transaction
 
 from .models import CustomUser
 from .serializers import (
@@ -37,11 +39,15 @@ class RegistrationAPIView(generics.CreateAPIView):
         is_superuser = serializer.validated_data.get("is_superuser", False)
 
         if is_superuser:
-            user = CustomUser.objects.create_superuser(
-                email=email, phone_number=phone_number, password=password)
+            with transaction.atomic():
+                user = CustomUser.objects.create_superuser(
+                    email=email, phone_number=phone_number, password=password
+                )
         else:
-            user = CustomUser.objects.create_user(
-                email=email, phone_number=phone_number, password=password)
+            with transaction.atomic():
+                user = CustomUser.objects.create_user(
+                    email=email, phone_number=phone_number, password=password
+                )
 
         headers = self.get_success_headers(serializer.data)
         return Response(
@@ -98,15 +104,26 @@ class ChangeEmailAPIView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def put(self, request):
-        serializer = self.serializer_class(
-            data=request.data, context={"request": request})
-        if serializer.is_valid():
-            user = request.user
-            serializer.update(user, serializer.validated_data)
+        email = request.data.get("email")
+        if not email:
             return Response(
-                {"message": "Email address changed successfully"},
-                status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                {"email": ["This field is required."]},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            validate_email(email)
+        except ValidationError:
+            return Response(
+                {"email": ["Enter a valid email address."]},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        user = request.user
+        user.email = email
+        user.save()
+        return Response(
+            {"message": "Email address changed successfully"},
+            status=status.HTTP_200_OK
+        )
 
 
 class CustomUserViewSet(viewsets.ModelViewSet):
@@ -120,29 +137,3 @@ class CustomUserViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['phone_number', 'email', 'is_active', 'is_staff']
     ordering_fields = ['email', 'date_joined']
-
-    @action(detail=False, methods=['GET'])
-    def list_accounts(self, request):
-        """
-        List all CustomUsers
-        """
-        queryset = self.filter_queryset(self.get_queryset())
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=['GET', 'PUT', 'PATCH', 'POST'])
-    def account_details(self, request, pk=None):
-        """
-        Retrieve, update or create a CustomUser
-        """
-        user = self.get_object()
-
-        if request.method == 'GET':
-            serializer = self.get_serializer(user)
-            return Response(serializer.data)
-        elif request.method in ['PUT', 'PATCH', 'POST']:
-            serializer = self.get_serializer(user,
-                                             data=request.data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data)

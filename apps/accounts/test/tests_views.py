@@ -102,6 +102,58 @@ class RegistrationAPIViewTestCase(TestCase):
         # Check that no user was created
         self.assertEqual(CustomUser.objects.count(), 0)
 
+    def test_create_superuser(self):
+        """
+        Test superuser registration with valid data
+        """
+        data = {
+            "email": "testuser@example.com",
+            "phone_number": "1234567890",
+            "password": "testpassword",
+            "confirm_password": "testpassword",
+            "is_superuser": True
+        }
+
+        url = reverse("register")
+        request = self.factory.post(url, data, format="json")
+        response = RegistrationAPIView.as_view()(request)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(CustomUser.objects.count(), 1)
+        self.assertTrue(CustomUser.objects.get().is_superuser)
+
+    def test_create_superuser_missing_required_fields(self):
+        """
+        Test user registration with missing required fields
+        """
+        url = reverse("register")
+        data = {
+            "email": "",
+            "phone_number": "1234567890",
+            "password": "",
+            "is_superuser": True
+        }
+        request = self.factory.post(url, data, format="json")
+        response = RegistrationAPIView.as_view()(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(CustomUser.objects.count(), 0)
+
+    def test_create_superuser_invalid_data(self):
+        """
+        Test user registration with invalid data
+        """
+        url = reverse("register")
+        data = {
+            "email": "invalidemail",
+            "phone_number": "1234567890",
+            "password": "short",
+            "is_superuser": True
+        }
+        request = self.factory.post(url, data, format="json")
+        response = RegistrationAPIView.as_view()(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(CustomUser.objects.count(), 0)
+
 
 class ChangePasswordAPIViewTest(APITestCase):
     def setUp(self):
@@ -291,7 +343,7 @@ class CustomUserViewSetTests(APITestCase):
         """
         Test that a superuser can list all CustomUser objects
         """
-        url = reverse('users-list')
+        url = reverse('user-list')
         self.client.credentials(
             HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
         response = self.client.get(url)
@@ -302,17 +354,26 @@ class CustomUserViewSetTests(APITestCase):
         """
         Test that a non-superuser cannot list all CustomUser objects
         """
-        url = reverse('users-list')
+        url = reverse('user-list')
         self.client.force_authenticate(user=self.user)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_account_details(self):
+    def test_account_details_retrieve(self):
+        url = reverse('user-detail',
+                      kwargs={'pk': self.user.pk})
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['email'], self.user.email)
+
+    def test_patch_account_details(self):
         """
         Test that a superuser can retrieve,
         update or create a CustomUser object
         """
-        url = reverse('users-account-details', kwargs={'pk': self.user.pk})
+        url = reverse('user-detail', kwargs={'pk': self.user.pk})
         self.client.credentials(
             HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
         response = self.client.patch(url)
@@ -324,7 +385,7 @@ class CustomUserViewSetTests(APITestCase):
         Test that a non-superuser cannot retrieve,
         update or create a CustomUser object
         """
-        url = reverse('users-account-details', kwargs={'pk': self.user.pk})
+        url = reverse('user-detail', kwargs={'pk': self.user.pk})
         data = {'email': 'newuser@test.com'}
         self.client.force_authenticate(user=self.user)
         response = self.client.patch(url, data)
@@ -334,7 +395,7 @@ class CustomUserViewSetTests(APITestCase):
         """
         Test that a superuser cannot retrieve a nonexistent CustomUser object
         """
-        url = reverse('users-account-details', kwargs={'pk': 999})
+        url = reverse('user-detail', kwargs={'pk': 999})
         self.client.credentials(
             HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
         response = self.client.get(url)
