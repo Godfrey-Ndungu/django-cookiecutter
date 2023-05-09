@@ -21,3 +21,4 @@ django-db-logger==0.1.12
 psycopg2-binary
 gunicorn
 django-filter==22.1
+django-cors-headers==3.14.0
