@@ -1,7 +1,5 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
 
 from .models import CustomUser
 
@@ -40,13 +38,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
             )
         return attrs
 
-    def create(self, validated_data):
-        return CustomUser.objects.create_user(
-            email=validated_data["email"],
-            password=validated_data["password"],
-            phone_number=validated_data.get("phone_number", ""),
-        )
-
 
 class ChangePasswordSerializer(serializers.Serializer):
     """
@@ -71,11 +62,6 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError("Incorrect password.")
         return attrs
 
-    def update(self, instance, validated_data):
-        instance.set_password(validated_data["new_password"])
-        instance.save()
-        return instance
-
 
 class ChangeProfileSerializer(serializers.ModelSerializer):
     """
@@ -86,14 +72,6 @@ class ChangeProfileSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ("phone_number",)
 
-        def update(self, instance, validated_data):
-            if not validated_data:
-                raise serializers.ValidationError("Empty data not allowed.")
-            instance.phone_number = validated_data.get("phone_number",
-                                                       instance.phone_number)
-            instance.save()
-            return instance
-
 
 class ChangeEmailSerializer(serializers.Serializer):
     """
@@ -101,30 +79,6 @@ class ChangeEmailSerializer(serializers.Serializer):
     """
 
     email = serializers.EmailField()
-
-    def validate_email(self, email):
-        if CustomUser.objects.filter(email=email).exists():
-            raise serializers.ValidationError("Email is already in use.")
-        return email
-
-    def validate(self, attrs):
-        attrs = super().validate(attrs)
-        email = attrs.get("email")
-
-        if not email:
-            raise serializers.ValidationError("Email is required.")
-
-        try:
-            validate_email(email)
-        except ValidationError as e:
-            raise serializers.ValidationError("Invalid email format.") from e
-
-        return attrs
-
-    def update(self, instance, validated_data):
-        instance.email = validated_data["email"]
-        instance.save()
-        return instance
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
