@@ -1,5 +1,6 @@
 from pathlib import Path
 from decouple import config
+from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = SECRET_KEY = config("SECRET_KEY", default='hdiohiodoidhioddontuseproductiondnhjodjiojdiod90')  # noqa
@@ -147,3 +148,9 @@ LOGGING = {
 }
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1*15),
+    "UPDATE_LAST_LOGIN": True,
+}
