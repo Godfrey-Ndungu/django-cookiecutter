@@ -18,3 +18,5 @@ django-db-logger==0.1.12
 psycopg2-binary
 Django==3.2.18
 importlib-metadata==4.13.0
+django-cors-headers==3.14.0
+django-redis==5.2.0
